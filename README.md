@@ -10,6 +10,7 @@ sudo su
 sudo git clone https://github.com/aryanguenthner/365 /opt/365 && cd 365
 <br>
 chmod a+x *.sh *.py
+<br>
 chmod -R 777 /opt/365
 <br>
 sudo ./kali-setup.sh | tee kali.log
@@ -23,6 +24,7 @@ sudo su
 sudo git clone https://github.com/aryanguenthner/ds /opt/ds && cd ds
 <br>
 chmod a+x *.sh *.py
+<br>
 chmod -R 777 /opt/ds
 <br>
 sudo ./darksheets-v1.2.sh | tee darksheets-v1.2.log
