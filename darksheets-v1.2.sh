@@ -136,7 +136,8 @@ else
     echo "The Devil's in your computer"
 fi
 echo
-
+echo "Config Looks Good So Far"
+echo
 # Editing Firefox about:config this allows DarkWeb .onion links to be opened with Firefox
 #echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
 #sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
@@ -150,7 +151,7 @@ else
     echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
     sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
 fi
-echo "Config Looks Good So Far"
+
 echo
 # What are you researching?
 read -p "What are you researching: " SEARCH
