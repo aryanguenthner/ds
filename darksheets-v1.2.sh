@@ -3,7 +3,7 @@
 # Made for OSINT CTI cyber security research on the Dark Deep Web
 # Intended to be used on Kali Linux
 # Updated for compatibility and better Tor handling
-# Hacked on 02/14/2025, pay me later
+# Hacked on 02/15/2025, pay me later
 # Great ideas
 # install_addon "https://addons.mozilla.org/firefox/downloads/file/4141345/noscript-11.4.26.xpi" "noscript"
 # install_addon "https://addons.mozilla.org/firefox/downloads/file/4125998/adblock_plus-3.17.1.xpi" "adblock_plus"
@@ -23,7 +23,7 @@ echo "OSINT CTI Cyber Threat intelligence v1.2"
 # Darksheets is meant for researchers and educational purposes only. This was developed to speed the investigation, enable clear documentation without pain and suffering. Pay me later.
 # Consider using spiderfoot,redtiger
 # https://github.com/smicallef/spiderfoot
-# https://github.com/loxy0dev/RedTiger-Tools
+
 echo
 # Todays Date
 sudo timedatectl set-timezone America/Los_Angeles
@@ -74,6 +74,7 @@ echo
 # Dependencies Check
 # Must have LibreOffice,TheDevilsEye,Tor,TorGhost,OnionVerifier,FireFox,Chrome Brwoser, GoWitness
 echo "Checking Requirements"
+echo "Please be patient"
 sudo apt-get install -y jq tor torbrowser-launcher python3-stem libreoffice > /dev/null 2>&1
 # Simulated Progress Bar
 echo -ne '#####                     (33%)\r'
@@ -83,17 +84,16 @@ sleep 1
 echo -ne '#######################   (100%)\r'
 echo -ne '\n'
 echo
-echo "Config Looks Good So Far"
-echo
 # Verify gowitness 3.0.5 is in /opt/365
-GOWIT=/opt/365/gowitness
+GOWIT=/opt/ds/gowitness
 if [ -f "$GOWIT" ]
 then
     echo -e "\e[031mFound GoWitness 3.0.5\e[0m"
 else
     echo -e "\e[031mDownloading Missing GoWitness 3.0.5\e[0m"
-    wget --no-check-certificate -O /home/kali/Desktop/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
-    chmod -R 777 /home/kali
+    wget --no-check-certificate -O /opt/ds/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
+    chmod -R 777 /opt/ds/gowitness
+    chmod a+x gowitness
 fi
 echo
 # Verify LibreOffice is installed
@@ -149,8 +149,8 @@ else
     echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
     sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
 fi
+echo "Config Looks Good So Far"
 echo
-
 # What are you researching?
 read -p "What are you researching: " SEARCH
 echo -e "\nSearching for $SEARCH"
