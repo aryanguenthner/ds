@@ -3,7 +3,7 @@
 # Made for OSINT CTI cyber security research on the Dark Deep Web
 # Intended to be used on Kali Linux
 # Updated for compatibility and better Tor handling
-# Hacked on 02/16/2025, pay me later
+# Hacked on 02/15/2025, pay me later
 # Great ideas
 # install_addon "https://addons.mozilla.org/firefox/downloads/file/4141345/noscript-11.4.26.xpi" "noscript"
 # install_addon "https://addons.mozilla.org/firefox/downloads/file/4125998/adblock_plus-3.17.1.xpi" "adblock_plus"
@@ -21,7 +21,7 @@ cat <<'EOF'
 EOF
 echo "OSINT CTI Cyber Threat intelligence v1.2"
 # Darksheets is meant for researchers and educational purposes only. This was developed to speed the investigation, enable clear documentation without pain and suffering. Pay me later.
-# Consider using spiderfoot or similar
+# Consider using spiderfoot,redtiger
 # https://github.com/smicallef/spiderfoot
 
 echo
@@ -34,7 +34,6 @@ CITY=$(curl -s http://ip-api.com/line?fields=timezone | cut -d "/" -f 2)
 PWD=$(pwd)
 RED='\033[31m'
 #RANDOM=$$
-DS=/opt/ds
 echo
 
 # Network Information
@@ -75,7 +74,6 @@ echo
 # Dependencies Check
 # Must have LibreOffice,TheDevilsEye,Tor,TorGhost,OnionVerifier,FireFox,Chrome Brwoser, GoWitness
 echo "Checking Requirements"
-echo "Please be patient"
 sudo apt-get install -y jq tor torbrowser-launcher python3-stem libreoffice > /dev/null 2>&1
 # Simulated Progress Bar
 echo -ne '#####                     (33%)\r'
@@ -84,7 +82,7 @@ echo -ne '#############             (66%)\r'
 sleep 1
 echo -ne '#######################   (100%)\r'
 echo -ne '\n'
-echo
+
 # Verify gowitness 3.0.5 is in /opt/365
 GOWIT=/opt/ds/gowitness
 if [ -f "$GOWIT" ]
@@ -92,9 +90,9 @@ then
     echo -e "\e[031mFound GoWitness 3.0.5\e[0m"
 else
     echo -e "\e[031mDownloading Missing GoWitness 3.0.5\e[0m"
-    wget --no-check-certificate -O /opt/ds/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
-    chmod -R 777 /opt/ds/gowitness
-    chmod a+x gowitness
+    wget --no-check-certificate -O /opt/365/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
+    chmod a+x /opt/ds/gowitness
+    chmod -R 777 /opt/ds
 fi
 echo
 # Verify LibreOffice is installed
@@ -122,9 +120,10 @@ else
     sudo python3 install.py
     echo "TorghostNG is installed"
 fi
+echo
 
-cd $DS
 # Verify the Devil exists
+#E=/usr/local/bin/eye
 E=/root/.local/share/pipx/venvs/thedevilseye/bin/eye
 if [ -f "$E" ]
 then
@@ -135,9 +134,9 @@ else
     echo
     echo "The Devil's in your computer"
 fi
+echo -ne '#######################\r'
 echo
-echo "Config Looks Good So Far"
-echo
+
 # Editing Firefox about:config this allows DarkWeb .onion links to be opened with Firefox
 #echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
 #sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
@@ -151,8 +150,12 @@ else
     echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
     sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
 fi
-
 echo
+
+echo "Config Looks Good So Far"
+cd /opt/ds
+echo -ne '\n'
+
 # What are you researching?
 read -p "What are you researching: " SEARCH
 echo -e "\nSearching for $SEARCH"
@@ -287,32 +290,31 @@ readarray -t HITS < <(awk -v search="$SEARCH" '
 ' "$ONIONS")
 
 # Assign extracted values (fallback to empty string if fewer than 3)
-HIT1="${HITS[0]:-}"
-HIT2="${HITS[1]:-}"
-HIT3="${HITS[2]:-}"
+HITS=("${HITS[@]:0:3}")  # Keep only the first 3 elements
 
 echo "Opening Dark Web Sites in Firefox"
-qterminal -e qterminal -e su -c "firefox $HIT1" kali & disown > /dev/null 2>&1 &
-qterminal -e qterminal -e su -c "firefox $HIT2" kali & disown > /dev/null 2>&1 &
-qterminal -e qterminal -e su -c "firefox $HIT3" kali & disown > /dev/null 2>&1 &
+
+for HIT in "${HITS[@]}"; do
+    [ -n "$HIT" ] && 
+    qterminal -e qterminal -e su -c "firefox $HIT" kali & disown > /dev/null 2>&1 &
+done
+
 # Debugging (optional)
-echo "HIT1: $HIT1"
-echo "HIT2: $HIT2"
-echo "HIT3: $HIT3"
+printf "\n%s\n" "${HITS[@]}"
 echo
 
 RESULTS_FILE=results.onion.csv
 # Get Screenshot, Save results to db
 echo "GoWitness Getting Screenshots, Be patient and let it run"
 echo
-sudo qterminal -e ./gowitness scan file -f $RESULTS_FILE --threads 20 --write-db --chrome-proxy socks5://127.0.0.1:9050 & disown > /dev/null 2>&1 &
+qterminal -e ./gowitness scan file -f $RESULTS_FILE --threads 25 --write-db --chrome-proxy socks5://127.0.0.1:9050 & disown > /dev/null 2>&1 &
 
-# Start Web Server
+# After results have been saved to db, Start Web Server
 echo "Starting GoWitness Server, Open http://127.0.0.1:7171/ when the screenshots are ready"
 echo
-sudo qterminal -e ./gowitness report server & disown > /dev/null 2>&1 &
+qterminal -e ./gowitness report server & disown > /dev/null 2>&1 &
 
-# Open Firefox to see the results
+# After the web server has started, Open Firefox to see the results
 echo "Opening GoWitness Results in Firefox"
 GOSERVER="http://127.0.0.1:7171/gallery"
 qterminal -e qterminal -e su -c "firefox $GOSERVER" kali & disown > /dev/null 2>&1 &
