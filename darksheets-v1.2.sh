@@ -85,16 +85,6 @@ echo -ne '\n'
 echo
 echo "Config Looks Good So Far"
 echo
-# Python3 Verify Onion Links
-#OINFO=/opt/365/onion_verifier.py
-#if [ -f "$OINFO" ]
-#then
-#    echo -e "\e[031mFound Onion Verifier\e[0m"
-#else
-#    echo -e "\e[031mGetting Onion Verifier\e[0m"
-#    sudo cp /opt/365/onion_verifier.py "$PWD"
-#fi
-#echo
 # Verify gowitness 3.0.5 is in /opt/365
 GOWIT=/opt/365/gowitness
 if [ -f "$GOWIT" ]
@@ -115,22 +105,9 @@ else
     echo -e "\e[031mPlease wait while LibreOffice is installed\e[0m"
     sudo apt-get install -y libreoffice
 fi
-
-# Editing Firefox about:config this allows DarkWeb .onion links to be opened with Firefox
-#echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
-#sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
-USER_JS_PATH=$(find /home/kali/.mozilla/firefox/ -name "user.js" | head -n 1)
-
-if [[ -f "$USER_JS_PATH" ]]; then
-    if ! grep -q 'user_pref("network.dns.blockDotOnion", false);' "$USER_JS_PATH"; then
-        echo 'user_pref("network.dns.blockDotOnion", false);' >> "$USER_JS_PATH"
-    fi
-else
-    echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
-    sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
-fi
 echo
 
+# Verify TorGhost is installed
 TORNG=/usr/bin/torghostng
 if [ -f "$TORNG" ]
 then
@@ -156,6 +133,21 @@ else
     sudo pipx install thedevilseye==2022.1.4.0 > /dev/null 2>&1
     echo
     echo "The Devil's in your computer"
+fi
+echo
+
+# Editing Firefox about:config this allows DarkWeb .onion links to be opened with Firefox
+#echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
+#sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
+USER_JS_PATH=$(find /home/kali/.mozilla/firefox/ -name "user.js" | head -n 1)
+# Fix Firefox for Dark Web
+if [[ -f "$USER_JS_PATH" ]]; then
+    if ! grep -q 'user_pref("network.dns.blockDotOnion", false);' "$USER_JS_PATH"; then
+        echo 'user_pref("network.dns.blockDotOnion", false);' >> "$USER_JS_PATH"
+    fi
+else
+    echo 'user_pref("network.dns.blockDotOnion", false);' > user.js
+    sudo mv user.js /home/kali/.mozilla/firefox/*default-esr/
 fi
 echo
 
