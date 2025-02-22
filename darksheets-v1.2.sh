@@ -28,7 +28,10 @@ echo
 # Todays Date
 sudo timedatectl set-timezone America/Los_Angeles
 echo -e "\e[034mToday is\e[0m"
-date '+%Y-%m-%d %r' | tee darksheets.run.date
+export LC_TIME="en_US.UTF-8"
+DATE=date
+date | tee darksheets.run.date
+
 # Setting Variables
 CITY=$(curl -s http://ip-api.com/line?fields=timezone | cut -d "/" -f 2)
 PWD=$(pwd)
@@ -84,15 +87,15 @@ echo -ne '#######################   (100%)\r'
 echo -ne '\n'
 
 # Verify gowitness 3.0.5 is in /opt/365
-GOWIT=/opt/ds/gowitness
+GOWIT=/opt/365/gowitness
 if [ -f "$GOWIT" ]
 then
     echo -e "\e[031mFound GoWitness 3.0.5\e[0m"
 else
     echo -e "\e[031mDownloading Missing GoWitness 3.0.5\e[0m"
-    wget --no-check-certificate -O /opt/ds/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
-    chmod a+x /opt/ds/gowitness
-    chmod -R 777 /opt/ds
+    wget --no-check-certificate -O /opt/365/gowitness 'https://drive.google.com/uc?export=download&id=1C-FpaGQA288dM5y40X1tpiNiN8EyNJKS' # gowitness 3.0.5
+    chmod a+x /opt/365/gowitness
+    chmod -R 777 /opt/365
 fi
 echo
 
@@ -310,7 +313,7 @@ echo
 # After the web server has started, Open Firefox to see the results
 echo "Opening GoWitness Results in Firefox"
 echo
-GOSERVER="http://127.0.0.1:7171/gallery"
+GOSERVER=http://127.0.0.1:7171/gallery
 sudo -u kali firefox $GOSERVER > /dev/null 2>&1 & disown
 
 # Ask the user if they want to disconnect from the dark web
