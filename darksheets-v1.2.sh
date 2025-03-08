@@ -224,7 +224,7 @@ echo
 # Perform Devils Eye Search
 RESULTS_FILE=results.onion.csv
 sudo /root/.local/share/pipx/venvs/thedevilseye/bin/eye -q "$SEARCH" | grep ".onion" > "$RESULTS_FILE"
-sed '/^invest/d; /^222/d; /^porn/d; /\.onion$/!d' "$RESULTS_FILE" > "$RESULTS_FILE.tmp" && mv "$RESULTS_FILE.tmp" "$RESULTS_FILE"
+sed '/^invest/d; /^222/d; /^drug/d; /^porn/d; /\.onion$/!d' "$RESULTS_FILE" > "$RESULTS_FILE.tmp" && mv "$RESULTS_FILE.tmp" "$RESULTS_FILE"
 sort -u "$RESULTS_FILE" -o "$RESULTS_FILE"
 echo -e "\e[31mOnions Found:\e[0m $(wc -l < "$RESULTS_FILE")"
 echo
