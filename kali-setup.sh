@@ -2,7 +2,7 @@
 
 ################################################
 # Kali Linux Red Team Setup Automation Script
-# Last Updated 02/15/2025, minor evil updates, pay me later
+# Last Updated 03/07/2025, minor evil updates, pay me later
 # Tested on Kali 2024.4 XFCE
 # Usage: sudo git clone https://github.com/aryanguenthner/365 /opt/
 # cd 365 && sudo chmod a+x *.sh
@@ -10,14 +10,27 @@
 # sudo time ./kali-setup.sh 2>&1 | tee kali.log
 ################################################
 echo
-# Add kali to sudoers
-echo "kali ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/kali > /dev/null 2>&1
-echo
+
+# Exit on error
+set -e
+
+# TODO: Create a splash screen with menu options
+# Menu options: 1 = Update Kali, 2 = Install kali Setup, 3 Install Kali Extra's, 4 Give me it all
+
+# Add kali to sudoers# Check if 'kali' is already in the sudoers file
+if sudo grep -q "^kali ALL=(ALL) NOPASSWD:ALL" /etc/sudoers.d/kali 2>/dev/null; then
+    echo "'kali' is already in sudoers. Skipping addition."
+else
+    echo "Adding 'kali' to sudoers..."
+    echo "kali ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/kali > /dev/null
+    echo "'kali' added to sudoers."
+fi
 
 # Setting Variables
 YELLOW=033m
 BLUE=034m
 PWD=$(pwd)
+export LC_TIME="en_US.UTF-8"
 
 # Get the directory where the kali-setup.sh is executed
 script_dir=$(pwd)
@@ -38,7 +51,7 @@ echo
 timedatectl set-timezone America/Los_Angeles
 timedatectl set-ntp true
 echo -e "\e[034mToday is\e[0m"
-date '+%Y-%m-%d %r' | tee kali-setup-date.txt
+date | tee kali-setup-date.txt
 echo
 
 echo "Getting BIOS Info"
@@ -89,7 +102,7 @@ echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
 # Hackers like SSH
 echo "Enabling SSH"
 echo
-sed -i '40s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config > /dev/null 2>&1
+sudo sed -i '40s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config > /dev/null 2>&1
 sudo systemctl enable ssh && sudo service ssh restart
 echo
 
@@ -104,41 +117,52 @@ echo
 # sudo xfce4-panel > /dev/null 2>&1
 
 # Prepare Kali installs
-apt-get update && apt-get -y upgrade && full-upgrade && apt -y autoremove && updatedb
+sudo apt-get update && apt-get -y upgrade && apt-get -y full-upgrade
 echo
-sudo apt-get install -y mono-devel printer-driver-escpr pipx python3-distutils-extra torbrowser-launcher shellcheck wkhtmltopdf yt-dlp libxcb-cursor0 libxcb-xtest0 docker.io docker-compose freefilesync libfuse2t64 libkrb5-dev metagoofil pandoc python3-docxtpl cmseek neo4j libu2f-udev freefilesync hcxdumptool hcxtools assetfinder colorized-logs xfce4-weather-plugin npm ncat shotwell obfs4proxy libc++1 sendmail ibus feroxbuster virtualenv mailutils mpack ndiff python3-pyinstaller python3-notify2 python3-dev python3-pip python3-bottle python3-cryptography python3-dbus python3-matplotlib python3-mysqldb python3-openssl python3-pil python3-psycopg2 python3-pymongo python3-sqlalchemy python3-tinydb python3-py2neo at bloodhound ipcalc nload crackmapexec hostapd dnsmasq gedit cupp nautilus dsniff build-essential cifs-utils cmake curl ffmpeg gimp git graphviz imagemagick libapache2-mod-php php-xml libmbim-utils nfs-common openssl tesseract-ocr vlc xsltproc xutils-dev driftnet websploit apt-transport-https openresolv screenfetch baobab speedtest-cli libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev awscli sublist3r w3m cups system-config-printer gobuster libreoffice
+sudo apt-get install -y mono-devel printer-driver-escpr pipx python3-distutils-extra torbrowser-launcher shellcheck yt-dlp libxcb-cursor0 libxcb-xtest0 docker.io docker-compose freefilesync libfuse2t64 libkrb5-dev metagoofil pandoc python3-docxtpl cmseek neo4j libu2f-udev freefilesync hcxdumptool hcxtools assetfinder colorized-logs xfce4-weather-plugin npm ncat shotwell obfs4proxy libc++1 sendmail ibus feroxbuster virtualenv mailutils mpack ndiff python3-pyinstaller python3-notify2 python3-dev python3-pip python3-bottle python3-cryptography python3-dbus python3-matplotlib python3-mysqldb python3-openssl python3-pil python3-psycopg2 python3-pymongo python3-sqlalchemy python3-tinydb python3-py2neo at bloodhound ipcalc nload crackmapexec hostapd dnsmasq gedit cupp nautilus dsniff build-essential cifs-utils cmake curl ffmpeg gimp git graphviz imagemagick libapache2-mod-php php-xml libmbim-utils nfs-common openssl tesseract-ocr vlc xsltproc xutils-dev driftnet websploit apt-transport-https openresolv screenfetch baobab speedtest-cli libffi-dev libssl-dev libxml2-dev libxslt1-dev zlib1g-dev awscli sublist3r w3m cups system-config-printer gobuster libreoffice
 echo
 
-# Some dependencies
-sudo apt install -y gcc make linux-headers-$(uname -r)
+# Some dependencies, might fix vbox issues
+sudo apt-get install -y gcc make linux-headers-$(uname -r)
+sudo apt-get autoremove -y && updatedb
 
-# Variables
-CHROME_DEB_URL="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-DEB_FILE="google-chrome-stable_current_amd64.deb"
+# Google Chrome Installer
+GC="/usr/bin/google-chrome-stable"
+if [ -f "$GC" ]; then
+    echo -e "\e[031mFFound Google Chrome\e[0m"
+else
+    echo "Google Chrome not found. Installing..."
+    # Remove unnecessary packages and update database (optional)
+    sudo apt-get autoremove -y
 
-# Download the latest Google Chrome Debian package
-echo "Downloading and Installing Google Chrome..."
-wget -O "$DEB_FILE" "$CHROME_DEB_URL"
+    # Variables
+    CHROME_DEB_URL="https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    DEB_FILE="google-chrome-stable_current_amd64.deb"
 
-# Install the downloaded package
-echo "Installing Google Chrome..."
-sudo dpkg -i "$DEB_FILE"
+    # Download the latest Google Chrome Debian package
+    echo "Downloading and Installing Google Chrome..."
+    wget -O "$DEB_FILE" "$CHROME_DEB_URL"
 
-# Fix any dependency issues
-echo "Fixing dependencies..."
-sudo apt-get install -f -y
+    # Install the downloaded package
+    echo "Installing Google Chrome..."
+    sudo dpkg -i "$DEB_FILE"
 
-# Clean up
-echo "Cleaning up..."
-rm "$DEB_FILE"
+    # Fix any dependency issues
+    echo "Fixing dependencies..."
+    sudo apt-get install -f -y
 
-echo "Google Chrome installation complete!"
-echo
+    # Clean up
+    echo "Cleaning up..."
+    rm "$DEB_FILE"
+
+    echo "Google Chrome installation complete!"
+    echo
+fi
 
 # Signal Install
 # Step 1: Install the official public software signing key
 echo "Installing the Signal Desktop public software signing key..."
-wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+wget --no-check-certificate -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
 sudo mv signal-desktop-keyring.gpg /usr/share/keyrings/
 
 # Step 2: Add the Signal repository to the list of repositories
@@ -159,7 +183,7 @@ ZOOM_DEB="zoom_amd64.deb"
 
 # Download Zoom .deb package
 echo "Downloading Zoom for Linux..."
-wget -O $ZOOM_DEB $ZOOM_URL
+wget --no-check-certificate -O $ZOOM_DEB $ZOOM_URL
 
 # Install Zoom
 echo "Installing Zoom..."
@@ -178,7 +202,7 @@ DISCORD_DEB="discord.deb"
 
 # Download Discord .deb package
 echo "Downloading Discord for Linux..."
-wget -O $DISCORD_DEB $DISCORD_URL
+wget --no-check-certificate -O $DISCORD_DEB $DISCORD_URL
 
 # Install Discord
 echo "Installing Discord..."
@@ -197,13 +221,12 @@ echo
 
 # Download the latest Slack .deb package
 echo "Downloading the latest Slack .deb package..."
-wget -O slack-desktop.deb $SLACK_URL
+wget --no-check-certificate -O slack-desktop.deb $SLACK_URL
 
 # Install the Slack .deb package
 echo "Installing Slack..."
 sudo dpkg -i slack-desktop.deb
 echo
-
 echo "Hey Slacker- Slack installation complete!"
 echo
 
@@ -213,7 +236,7 @@ WKHTMLTOX_DEB_FILE=wkhtmltox_0.12.6.1-3.bookworm_amd64.deb
 
 # Download the wkhtmltox Debian package
 echo "Downloading wkhtmltox..."
-wget -O "$WKHTMLTOX_DEB_FILE" "$WKHTMLTOX_DEB_URL"
+wget --no-check-certificate -O "$WKHTMLTOX_DEB_FILE" "$WKHTMLTOX_DEB_URL"
 chmod -R 777 $WKHTMLTOX_DEB_FILE
 
 # Install the wkhtmltox downloaded package
@@ -222,7 +245,7 @@ sudo dpkg -i "$WKHTMLTOX_DEB_FILE"
 
 echo "Downloading and installing Shodan Nrich"
 # Get your Shodan API Key
-wget https://gitlab.com/api/v4/projects/33695681/packages/generic/nrich/latest/nrich_latest_x86_64.deb
+wget --no-check-certificate https://gitlab.com/api/v4/projects/33695681/packages/generic/nrich/latest/nrich_latest_x86_64.deb
 sudo dpkg -i nrich_latest_x86_64.deb
 echo
 
@@ -239,16 +262,6 @@ echo "Installing NetExec"
 sudo pipx install git+https://github.com/Pennyw0rth/NetExec
 sudo pipx ensurepath --prepend
 echo
-
-# Get Pippy wit it
-#python3 -m pip install --upgrade pip
-#pip3 install --upgrade setuptools
-
-#echo "Installing psycopg"
-#pip install psycopg
-#echo
-## Install virtualenv
-#sudo apt install python3-venv
 
 # Updog
 # Create a virtual environment
@@ -282,11 +295,9 @@ if [ -f $NB ]
 then
 
     echo "Found nmap-bootstrap.xsl"
-
 else
-
     echo -e "\e[034mFetching Missing $BOOTSTRAP File\e[0m"
-wget --no-check-certificate -O /home/kali/Desktop/testing/nmapscans/nmap-bootstrap.xsl https://raw.githubusercontent.com/aryanguenthner/nmap-bootstrap-xsl/stable/nmap-bootstrap.xsl > /dev/null 2>&1
+    wget --no-check-certificate -O /home/kali/Desktop/testing/nmapscans/nmap-bootstrap.xsl https://raw.githubusercontent.com/aryanguenthner/nmap-bootstrap-xsl/stable/nmap-bootstrap.xsl > /dev/null 2>&1
 
 fi
 echo
@@ -296,23 +307,38 @@ echo
 # qterminal -e cloudflared tunnel -url localhost:80
 sudo dpkg -i /opt/365/cloudflared-linux-amd64.deb
 
-# Go Env Paths
-echo 'export PATH="$PATH:/usr/local/go/bin"' >> /root/.zshrc
-echo 'export PATH="$PATH:$HOME/go/bin"' >> /root/.zshrc
-echo 'export PATH="$PATH:/root/go"' >> /root/.zshrc
-
 # Updating /opt/365 permissions and file execution
-chmod -R 777 /opt/365
-chmod a+x /opt/365/*.sh /opt/365/*.py
+sudo chmod -R 777 /opt/365
+sudo chmod a+x /opt/365/*.sh /opt/365/*.py
 
-# Just Go for it!
-wget --no-check-certificate https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
-tar -xvzf go1.23.0.linux-amd64.tar.gz
-sudo mv go /usr/local
+# Verify Go 1.23.0 installation
+if go version 2>/dev/null | grep -q "go1.23.0"; then
+    echo "Go is version 1.23.0 installed"
+else
+    echo -e "\e[34mDownloading and Installing Go\e[0m"
+    wget --no-check-certificate https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
+    sudo tar -xvzf go1.23.0.linux-amd64.tar.gz -C /usr/local
+    echo "Go installation complete."
+fi
 echo
-# Get go Version
-sudo source ~/.zshrc
-go version
+
+# Setting up Go environment variables
+echo "Configuring Go environment..."
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.zshrc
+echo 'export GOPATH=$HOME/go' >> ~/.zshrc
+echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc
+source /etc/profile
+source ~/.zshrc  # Reload shell configuration
+
+# IP Address# 
+echo "Check if hostname -I is already in /root/.zshrc"
+if ! grep -q "hostname -I" /root/.zshrc; then
+    echo "Adding 'hostname -I' to /root/.zshrc..."
+    echo 'hostname -I' | sudo tee -a /root/.zshrc > /dev/null
+else
+    echo "'hostname -I' is already in /root/.zshrc. Skipping..."
+fi
+echo
 
 # Project Discovery Nuclei
 cd /opt
@@ -345,13 +371,28 @@ go install github.com/OJ/gobuster/v3@latest
 echo
 
 echo "Cewl Password Lists"
-# cewl -m 8 https://www.example.com -c -e --with-numbers -w example-cewl.txt
-cd /opt
-git clone https://github.com/digininja/CeWL.git
+# cewl -m 8 https://www.bobandalice.com -c -e --with-numbers -w example-cewl.txt
+git clone https://github.com/digininja/CeWL.git /opt/cewl
+cd cewl
 gem install mime-types
 gem install mini_exiftool
 gem install rubyzip
 gem install spider
+echo
+
+# Verify gowitness 2.4.2 is in the house
+GOWIT=gowitness
+if [ -f "$GOWIT" ]
+then
+    echo -e "\e[031mFound GoWitness 2.4.2\e[0m"
+else
+    echo -e "\e[031mDownloading Missing GoWitness\e[0m"
+# There is a newer version available but this one works well
+    wget --no-check-certificate -O gowitness 'https://drive.google.com/uc?export=download&id=1hXJAEQAFqFu5A4uR14dUWWdwWceLHz6D' # gowitness 2.4.2
+    chmod -R 777 gowitness
+    chmod a+x gowitness
+    ./gowitness version
+fi
 echo
 
 # Ask user if they want to install extra Git repositories
@@ -416,19 +457,6 @@ cd /opt
 git clone https://github.com/swisskyrepo/PayloadsAllTheThings.git
 echo
 
-echo "SprayingToolKit"
-cd /opt
-git clone https://github.com/byt3bl33d3r/SprayingToolkit.git
-: ' Nmap works dont forget --> nmap -iL smb-ips.txt --stats-every=1m -Pn -p 445 -script smb-brute --script-args='smbpassword=Summer2023,userdb=usernames.txt,smbdomain=xxx.com,smblockout=true' -oA nmap-smb-brute-2023-07-19
-'
-echo
-: ' Hydra works dont forget --> hydra -p Summer2019 -l Administrator smb://192.168.1.23
-Metasploit works dont forget --> 
-set smbpass Summer2019
-set smbuser Administrator
-set rhosts 192.168.1.251
-run '
-
 echo "Awesome XSS"
 cd /opt
 git clone https://github.com/s0md3v/AwesomeXSS.git
@@ -484,6 +512,7 @@ git clone https://github.com/s0md3v/Breacher.git
 echo
 
 # Clone the PhoneInfoga repository
+# You will need API to get most of this tool
 echo "Cloning the PhoneInfoga repository..."
 sudo git clone https://github.com/sundowndev/PhoneInfoga.git
 
@@ -496,16 +525,26 @@ echo "Running the PhoneInfoga install script..."
 sudo curl -sSL https://raw.githubusercontent.com/sundowndev/PhoneInfoga/master/support/scripts/install | sudo bash
 
 # Run PhoneInfoga
+sudo mv ./phoneinfoga /usr/local/bin/phoneinfoga
 echo "Running PhoneInfoga..."
-sudo ./phoneinfoga
+sudo phoneinfoga scan -n 8085551212
+
 # Windows Exploit Suggester Next Gen
 echo
-cd /opt
-sudo git clone https://github.com/bitsadmin/wesng.git
+sudo git clone https://github.com/bitsadmin/wesng.git /opt/wseng
 echo
 
+echo "SprayingToolKit"
+git clone https://github.com/byt3bl33d3r/SprayingToolkit.git /opt/SprayingToolkit
+: ' Nmap works dont forget --> nmap -iL smb-ips.txt --stats-every=1m -Pn -p 445 -script smb-brute --script-args='smbpassword=Summer2023,userdb=usernames.txt,smbdomain=xxx.com,smblockout=true' -oA nmap-smb-brute-2023-07-19'
+: ' Hydra works dont forget --> hydra -p Summer2019 -l Administrator smb://192.168.1.23
+Metasploit works dont forget --> 
+set smbpass Summer2019
+set smbuser Administrator
+set rhosts 192.168.1.251
+run '
+echo
 echo "Extra installations complete."
-
 else
     echo "Skipping extra Git repositories installation."
 fi
@@ -514,7 +553,7 @@ echo
 # Fix annoying apt-key
 # If Needed
 # sudo apt-key del <KEY_ID>
-#      <B9F8 D658 297A F3EF C18D  5CDF A2F6 83C5 2980 AECF>
+# <B9F8 D658 297A F3EF C18D  5CDF A2F6 83C5 2980 AECF>
 # sudo apt-key export 058F8B6B | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/mongo.gpg
 # sudo apt-key export 2007B954 | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/msf.gpg
 # sudo apt-key export 038651BD | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/slack.gpg
@@ -538,47 +577,14 @@ echo
 #yes | ivre flowcli --init
 #yes | sudo ivre runscansagentdb --init
 # 40 Min download --> sudo ivre ipdata --download
-#echo -e '\r'
+#echo -e '\n'
 #echo
-
-# Can I get a Witness?
-# Get Screenshots
-# ./gowitness file -f url-results.txt
-# "View Report http://localhost:7171"
-# ./gowitness server report
-# Can I get a gowitness?
-sudo mkdir -p /home/kali/Desktop/testing/urlwitness/gowitness
-GWIT=/home/kali/Desktop/testing/urlwitness/gowitness
-if [ -f "$GWIT" ]
-then
-    echo "Found gowitness"
-
-else
-    echo -e "\e[034mDownloading Missing $GWIT\e[0m"
-    wget --no-check-certificate -O /home/kali/Desktop/testing/urlwitness/gowitness 'https://drive.google.com/uc?export=download&id=1hXJAEQAFqFu5A4uR14dUWWdwWceLHz6D'
-    chmod -R 777 /home/kali
-
-fi
-echo
 
 # Insurance
 # sudo apt-get --reinstall install python3-debian -y
 # sudo apt --fix-broken install
 # sudo apt autoremove -y
 # systemctl restart ntp
-echo
-
-# If installing in VM
-#VBOX1=$(dmidecode -s bios-version)
-#if [ VBOX1=Virtualbox ] 
-# then
-# echo "Skipping VBox Install"
-# else
-# apt-get install virtualbox
-#fi
-
-## VirtualBox Hack for USB Devices
-#sudo usermod -a -G vboxusers $USER
 
 # TODO: Add this to VLC https://broadcastify.cdnstream1.com/24051
 # TODO: echo "OneListForAll"
@@ -606,36 +612,15 @@ echo
 # TODO: Check this out
 # text in your terminal > ansi2html > nmap-report.html
 # ssmtp <--works good, just doesnt play with sendmail.
-# did not install > openjdk-13-jdk libc++1-13 libc++abi1-13 libindicator3-7 libunwind-13 python3.8-venv libappindicator3-1 
+# did not install > openjdk-13-jdk libc++1-13 libc++abi1-13 libindicator3-7 libunwind-13 python3.8-venv libappindicator3-1
+# sendmail
 echo
 
 # Stop Docker
 # Remove Docker Interface until you need it
-sudo systemctl stop docker && systemctl disable docker && ip link delete docker0
-echo
-
-# IP Address
-# Updated
-sudo echo 'hostname -I' >> /root/.zshrc
-
-:'
-# Customize Kali Paths
-# Set HISTCONTROL
-echo "export HISTCONTROL=ignoredups" >> /root/.zshrc
-
-# Update PATH variable with various directories
-echo "export PATH=$PATH:/root/work" >> /root/.zshrc
-echo "export PATH=$PATH:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games" >> /root/.zshrc
-echo "export PATH=$PATH:/usr/lib/jvm/java-11-openjdk-amd64/:/snap/bin" >> /root/.zshrc
-echo "export PATH=$PATH:/root/.local/bin" >> /root/.zshrc
-
-# Abide by the Source
-source ~/.zshrc
-echo
-'
-
-# Kali Setup Finish Time
-date | tee kali-setup-finish-date.txt
+sudo systemctl stop docker
+sudo systemctl disable docker
+sudo ip link delete docker0
 
 updatedb
 echo "Hack The Planet"
@@ -644,8 +629,46 @@ sed -i '120s/#autologin-user=/autologin-user=kali/g' /etc/lightdm/lightdm.conf
 sed -i '121s/#autologin-user-timeout=0/autologin-user-timeout=0/g' /etc/lightdm/lightdm.conf
 sudo service lightdm restart
 
+echo "Checking if you need Virtualbox installed"
+# Detect if running on VirtualBox or a physical machine
+VBOX=$(sudo dmidecode -s system-manufacturer)  # e.g., "LENOVO" for physical machine
+VBOX1=$(sudo dmidecode -s bios-version)  # "VirtualBox" if running inside a VM
+
+# Check if running in VirtualBox
+if [[ "$VBOX1" == "VirtualBox" ]]; then
+    echo "Running inside VirtualBox. Skipping installation."
+    exit 0
+else
+    echo "Running on a physical machine. Proceeding with installation."
+fi
+
+# Add Oracle VirtualBox GPG key (alternative for apt-key deprecation)
+echo "Adding Oracle VirtualBox GPG key..."
+wget -qO- https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo tee /etc/apt/trusted.gpg.d/oracle_vbox_2016.asc > /dev/null
+
+# Install prerequisites
+echo "Installing VBox required packages..."
+wget http://ftp.us.debian.org/debian/pool/main/libv/libvpx/libvpx7_1.12.0-1+deb12u3_amd64.deb
+sudo dpkg -i ./libvpx7_1.12.0-1+deb12u3_amd64.deb
+
+# Install VirtualBox and dependencies
+echo "Installing VirtualBox..."
+sudo apt-get install -y virtualbox virtualbox-dkms virtualbox-ext-pack virtualbox-guest-utils virtualbox-qt virtualbox-guest-x11 linux-headers-$(uname -r)
+
+# Add current user to vboxusers group
+echo "Adding user to vboxusers group..."
+sudo usermod -a -G vboxusers $USER
+echo "VirtualBox installation completed!"
+
+# Insurance
+# sudo modprobe vboxnetflt
+# Cross your fingers
+
+# Kali Setup Finish Time
+date | tee kali-setup-finish-date.txt
 echo
 reboot
 # Just in case DNS issues: nano -c /etc/resolvconf/resolv.conf.d/head
 # Gucci Mang
 # Pay me later
+# https://sites.google.com/site/gdocs2direct/
