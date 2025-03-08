@@ -134,6 +134,19 @@ else
 fi
 echo
 
+# Onion Verifier
+OV=onion_verifier.py
+if [ -f "$OV" ]
+then
+    echo -e "\e[031mFound Onion Verifier\e[0m"
+else
+    echo -e "\e[031mDownloading Onion Verifier\e[0m"
+    wget --no-check-certificate -O $PWD/onion_verifier.py 'https://github.com/aryanguenthner/ds/raw/refs/heads/main/onion_verifier.py'
+    chmod a+x $PWD/onion_verifier.py
+    chmod -R 777 $PWD/onion_verifier.py
+fi
+echo
+
 # Verify LibreOffice is installed
 L=/usr/bin/libreoffice
 if [ -f "$L" ]
