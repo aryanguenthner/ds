@@ -1,5 +1,3 @@
-Here’s your formatted version with no spacing for GitHub:  
-
 ```
 # DarkSheets  
 Dark Web Deep Web CTI, OSINT, Reporting  
