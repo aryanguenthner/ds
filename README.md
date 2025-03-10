@@ -7,6 +7,4 @@ sudo git clone https://github.com/aryanguenthner/ds /opt/ds
 cd ds  
 chmod -R 777 /opt/ds  
 sudo ./darksheets-v1.2.sh  
-```  
-
-Let me know if you need further refinements! 🚀
+``` 
